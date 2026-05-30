@@ -84,3 +84,25 @@ def get_specs(size: str, weight: float) -> dict:
             "cpk_type": "none",
         },
     }
+
+
+def get_spec_limits(size: str = "2-7/8", weight: float = 6.40) -> dict:
+    """
+    Return spec limits in the lowercase-key format consumed by pipeline nodes.
+
+    Wraps get_specs and maps OD→od_mm, WT→wt_mm, LSL→lsl, USL→usl.
+
+    Parameters
+    ----------
+    size   : nominal size string (default '2-7/8')
+    weight : linear weight in lb/ft (default 6.40)
+
+    Returns
+    -------
+    dict with keys 'od_mm' and 'wt_mm', each containing 'lsl' and 'usl'.
+    """
+    raw = get_specs(size, float(weight))
+    return {
+        "od_mm": {"lsl": raw["OD"]["LSL"], "usl": raw["OD"]["USL"]},
+        "wt_mm": {"lsl": raw["WT"]["LSL"], "usl": raw["WT"]["USL"]},
+    }
