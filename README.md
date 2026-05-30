@@ -1,3 +1,4 @@
+
 # OCTG Quality Agent
 
 Dimensional inspection of OCTG tubulars generates hundreds of measurements
@@ -24,6 +25,19 @@ automated statistical pipeline with three embedded decision points:
 All three decisions accumulate alerts but never skip nodes — the pipeline
 always runs to completion and delivers the full statistical picture in a
 single structured report.
+
+## Sample Output
+
+SPC individuals control charts generated automatically for each controlled dimension:
+
+**Outside Diameter (OD)**
+![SPC - Outside Diameter](https://claude.ai/chat/docs/images/spc_od_mm.png)
+
+**Wall Thickness (WT)**
+![SPC - Wall Thickness](https://claude.ai/chat/docs/images/spc_wt_mm.png)
+
+Red points indicate observations beyond ±3σ control limits. Control limits
+(CL, UCL, LCL) are statistical — distinct from API 5CT spec limits (LSL/USL).
 
 ## How to Run
 
@@ -65,21 +79,23 @@ octg-quality-agent/
 │   └── test_nodes.py         # 33 pytest tests with shared DataFrame fixture
 ├── data/
 │   └── inspection_sample.csv # Sample data — 2-7/8" J55, 100 parts
+├── docs/
+│   └── images/               # Sample output charts
 ├── main.py                   # CLI entry point
 └── requirements.txt
 ```
 
 ## Statistical Methods
 
-| MBA Content — Fundamentos de Estatística (USP Esalq) | Project Application |
-|---|---|
-| Measures of position (mean, median, mode) and dispersion (std, CV, IQR) | `node_descriptive` — overall and per-lot breakdown for OD, WT, ID |
-| Shape indicators: Fisher skewness (g1) and excess kurtosis (g2) | `node_descriptive` — alerts when \|g1\| > 1 or \|g2\| > 1 |
-| Process capability indices Cp and Cpk | `node_capability` — bilateral for OD; unilateral lower for WT (API 5CT §7.11.2) |
-| Student t-test for comparison of two independent means | `node_ttest` — lot-to-lot drift detection when variances are equal |
-| Chi-square goodness of fit (Fávero e Belfiore, 2024, Cap. 8) | `node_chisquare` — tests whether non-conformances are uniformly distributed across spec categories |
-| Pearson correlation and significance test (Fávero e Belfiore, 2024, Cap. 8) | `node_correlation` — OD×WT, OD×ID, WT×ID pairs |
-| *(beyond course content — industry practice)* | `node_normality` — Shapiro-Wilk; `node_levene` — variance equality; `node_spc` — 3-sigma control chart |
+| Statistical Methods (USP Esalq)                                             | Project Application                                                                                        |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Measures of position (mean, median, mode) and dispersion (std, CV, IQR)      | `node_descriptive`— overall and per-lot breakdown for OD, WT, ID                                        |
+| Shape indicators: Fisher skewness (g1) and excess kurtosis (g2)              | `node_descriptive`— alerts when                                                                         |
+| Process capability indices Cp and Cpk                                        | `node_capability`— bilateral for OD; unilateral lower for WT (API 5CT §7.11.2)                         |
+| Student t-test for comparison of two independent means                       | `node_ttest`— lot-to-lot drift detection when variances are equal                                       |
+| Chi-square goodness of fit (Fávero e Belfiore, 2024, Cap. 8)                | `node_chisquare`— tests whether non-conformances are uniformly distributed across spec categories       |
+| Pearson correlation and significance test (Fávero e Belfiore, 2024, Cap. 8) | `node_correlation`— OD×WT, OD×ID, WT×ID pairs                                                        |
+| *(industry practice)*                                                      | `node_normality`— Shapiro-Wilk;`node_levene`— variance equality;`node_spc`— 3-sigma control chart |
 
 ## Design Decisions
 
@@ -111,20 +127,20 @@ correlation but omits capability analysis for this dimension.
 
 ## Known Limitations and Future Improvements
 
-- **Data source:** the pipeline currently reads from a local CSV file. The
+* **Data source:** the pipeline currently reads from a local CSV file. The
   planned evolution is to replace this with a PostgreSQL source, enabling the
   agent to run against live inspection databases without manual file exports.
-- **Natural language report:** the final node terminates with a structured
+* **Natural language report:** the final node terminates with a structured
   dict. A planned LLM node will consume this state and generate a natural
   language inspection report via the Claude API or AWS Bedrock, making results
   accessible to non-technical stakeholders.
-- **Two-lot assumption:** the t-test and Levene nodes assume exactly two lots.
+* **Two-lot assumption:** the t-test and Levene nodes assume exactly two lots.
   Multi-lot support (ANOVA, Bartlett) is not yet implemented.
-- **LangGraph checkpointing:** `pd.DataFrame` is not natively serializable by
+* **LangGraph checkpointing:** `pd.DataFrame` is not natively serializable by
   LangGraph's checkpointer. Replacing the CSV input with PostgreSQL will also
   resolve this limitation.
 
 ## References
 
-- API 5CT, 11th Edition (2018) — Tables C.25 and 15, Sections 7.11.1 and 7.11.2
-- Fávero, L. P.; Belfiore, P. *Manual de Análise de Dados*. 2024, Cap. 8.
+* API 5CT, 11th Edition (2018) — Tables C.25 and 15, Sections 7.11.1 and 7.11.2
+* Fávero, L. P.; Belfiore, P.  *Manual de Análise de Dados* . 2024, Cap. 8.
