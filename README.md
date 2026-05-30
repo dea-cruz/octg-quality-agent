@@ -31,10 +31,10 @@ single structured report.
 SPC individuals control charts generated automatically for each controlled dimension:
 
 **Outside Diameter (OD)**
-![SPC - Outside Diameter](https://claude.ai/chat/docs/images/spc_od_mm.png)
+![SPC - Outside Diameter](https://raw.githubusercontent.com/dea-cruz/octg-quality-agent/dev/docs/images/spc_od_mm.png)
 
 **Wall Thickness (WT)**
-![SPC - Wall Thickness](https://claude.ai/chat/docs/images/spc_wt_mm.png)
+![SPC - Wall Thickness](https://raw.githubusercontent.com/dea-cruz/octg-quality-agent/dev/docs/images/spc_wt_mm.png)
 
 Red points indicate observations beyond ±3σ control limits. Control limits
 (CL, UCL, LCL) are statistical — distinct from API 5CT spec limits (LSL/USL).
