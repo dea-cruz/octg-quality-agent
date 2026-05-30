@@ -1,14 +1,14 @@
-# Orquestração do agente
+# Agent orchestration
 langgraph==0.2.55
 
-# Estatística e dados
+# Statistics and data
 numpy>=2.3.0
 pandas>=2.3.0
 scipy>=1.15.3
 
-# Visualizações
+# Visualizations
 matplotlib>=3.10.0
 seaborn>=0.13.2
 
-# Testes
+# Testing
 pytest==8.3.4
