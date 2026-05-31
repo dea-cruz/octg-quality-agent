@@ -1,4 +1,3 @@
-
 # OCTG Quality Agent
 
 ![Python](https://img.shields.io/badge/Python-3.11+-blue)
@@ -197,7 +196,7 @@ correlation but omits capability analysis for this dimension.
   agent to run against live inspection databases without manual file exports.
 * **Natural language report:** the final node terminates with a structured
   dict. A planned LLM node will consume this state and generate a natural
-  language inspection report via the Claude API or AWS Bedrock, making results
+  language inspection report via the API or AWS Bedrock, making results
   accessible to non-technical stakeholders.
 * **Two-lot assumption:** the t-test and Levene nodes assume exactly two lots.
   Multi-lot support (ANOVA, Bartlett) is not yet implemented.
