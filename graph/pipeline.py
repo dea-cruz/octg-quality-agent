@@ -2,9 +2,9 @@
 graph/pipeline.py — LangGraph pipeline for OCTG dimensional quality control.
 
 Defines the stateful graph with 3 conditional decision points:
-  Decision 1 — after node_capability: cpk_critical flag set
+  Decision 1 — after node_capability: cpk_critical flag
   Decision 2 — after node_levene: variances_equal routes to Student or Welch
-  Decision 3 — after node_ttest: drift_detected flag set
+  Decision 3 — after node_ttest: drift_detected flag
 
 All decisions append alerts but never skip nodes — the pipeline always
 runs to completion so the final report contains the full statistical picture.
@@ -33,31 +33,39 @@ def route_cpk(state: QualityState) -> str:
     Decision 1: after node_capability.
 
     cpk_critical=True means at least one dimension has Cpk < 1.00.
-    Alert is already appended by node_capability — routing always
-    continues to node_normality regardless.
+    Alert is already appended by node_capability.
+    Both paths continue to node_normality — the flag drives alerting,
+    not a different execution branch.
     """
-    return "node_normality"
+    if state.get("cpk_critical"):
+        return "cpk_critical"
+    return "cpk_ok"
 
 
 def route_levene(state: QualityState) -> str:
     """
     Decision 2: after node_levene.
 
-    variances_equal controls which t-test variant node_ttest applies
-    internally. Routing always goes to node_ttest.
+    variances_equal=True → node_ttest will apply Student's pooled t-test.
+    variances_equal=False → node_ttest will apply Welch's t-test.
+    Both paths go to node_ttest; the flag is read internally by that node.
     """
-    return "node_ttest"
+    if state.get("variances_equal"):
+        return "equal_variances"
+    return "unequal_variances"
 
 
 def route_ttest(state: QualityState) -> str:
     """
     Decision 3: after node_ttest.
 
-    drift_detected=True means at least one dimension shows significant
-    mean shift between lots. Alert already appended by node_ttest —
-    routing always continues to node_chisquare.
+    drift_detected=True means significant mean shift between lots.
+    Alert already appended by node_ttest.
+    Both paths continue to node_chisquare.
     """
-    return "node_chisquare"
+    if state.get("drift_detected"):
+        return "drift_detected"
+    return "no_drift"
 
 
 # ---------------------------------------------------------------------------
@@ -87,29 +95,43 @@ def build_pipeline() -> StateGraph:
     # Entry point
     graph.set_entry_point("node_descriptive")
 
-    # Linear edges
+    # Linear edge: descriptive → capability
     graph.add_edge("node_descriptive", "node_capability")
 
     # Decision 1 — cpk_critical
+    # Both paths lead to node_normality; flag drives alert, not branching
     graph.add_conditional_edges(
         "node_capability",
         route_cpk,
-        {"node_normality": "node_normality"},
+        {
+            "cpk_critical": "node_normality",
+            "cpk_ok":        "node_normality",
+        },
     )
 
-    # Decision 2 — variances_equal
+    # Linear edge: normality → levene
     graph.add_edge("node_normality", "node_levene")
+
+    # Decision 2 — variances_equal
+    # Both paths lead to node_ttest; flag read internally by that node
     graph.add_conditional_edges(
         "node_levene",
         route_levene,
-        {"node_ttest": "node_ttest"},
+        {
+            "equal_variances":   "node_ttest",
+            "unequal_variances": "node_ttest",
+        },
     )
 
     # Decision 3 — drift_detected
+    # Both paths lead to node_chisquare; flag drives alert, not branching
     graph.add_conditional_edges(
         "node_ttest",
         route_ttest,
-        {"node_chisquare": "node_chisquare"},
+        {
+            "drift_detected": "node_chisquare",
+            "no_drift":       "node_chisquare",
+        },
     )
 
     # Remaining linear edges
