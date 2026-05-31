@@ -88,7 +88,7 @@ red (Cpk < 1.00). OD uses bilateral spec limits (LSL/USL); WT uses unilateral lo
 git clone https://github.com/dea-cruz/octg-quality-agent.git
 cd octg-quality-agent
 pip install -r requirements.txt
-python main.py --size "2-7/8" --weight 6.40
+python main.py
 ```
 
 Use `--data` to point to a different inspection CSV:
@@ -140,10 +140,10 @@ octg-quality-agent/
 
 ## Statistical Methods
 
-The pipeline applies content from *Fundamentos de Estatística* (MBA in Data
+The pipeline applies content from Statistical Methods (MBA in Data
 Science & AI — USP Esalq) directly to an industrial inspection problem.
 
-| MBA Content (USP Esalq)                                                      | Project Application                                                                                        |
+| Statistical Methods (USP Esalq)                                             | Project Application                                                                                        |
 | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Measures of position (mean, median, mode) and dispersion (std, CV, IQR)      | `node_descriptive`— overall and per-lot breakdown for OD, WT, ID                                        |
 | Shape indicators: Fisher skewness (g1) and excess kurtosis (g2)              | `node_descriptive`— flags asymmetry and heavy tails in the measurement distribution                     |
@@ -151,7 +151,7 @@ Science & AI — USP Esalq) directly to an industrial inspection problem.
 | Student t-test for comparison of two independent means                       | `node_ttest`— lot-to-lot drift detection when variances are equal (Levene p ≥ 0.05)                    |
 | Chi-square goodness of fit (Fávero & Belfiore, 2024, Cap. 8)                | `node_chisquare`— tests whether non-conformances are uniformly distributed across spec categories       |
 | Pearson correlation and significance test (Fávero & Belfiore, 2024, Cap. 8) | `node_correlation`— OD×WT, OD×ID, WT×ID pairs                                                        |
-| *(beyond MBA content — industry practice)*                                | `node_normality`— Shapiro-Wilk;`node_levene`— variance equality;`node_spc`— 3-sigma control chart |
+| *(industry practice)*                                                      | `node_normality`— Shapiro-Wilk;`node_levene`— variance equality;`node_spc`— 3-sigma control chart |
 
 ---
 
@@ -192,7 +192,7 @@ correlation but omits capability analysis for this dimension.
   agent to run against live inspection databases without manual file exports.
 * **Natural language report:** the final node terminates with a structured
   dict. A planned LLM node will consume this state and generate a natural
-  language inspection report via the Claude API or AWS Bedrock, making results
+  language inspection report via the API or AWS Bedrock, making results
   accessible to non-technical stakeholders.
 * **Two-lot assumption:** the t-test and Levene nodes assume exactly two lots.
   Multi-lot support (ANOVA, Bartlett) is not yet implemented.
