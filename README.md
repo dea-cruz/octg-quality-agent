@@ -1,11 +1,38 @@
-
 # OCTG Quality Agent
 
-Dimensional inspection of OCTG tubulars generates hundreds of measurements
-per production lot. Manual review cannot reliably detect process drift,
-capability loss, or variance shifts between lots — patterns that precede
-nonconformity and can compromise well integrity long before any part formally
-fails specification.
+![Python](https://img.shields.io/badge/Python-3.11+-blue)
+![LangGraph](https://img.shields.io/badge/LangGraph-pipeline-green)
+![API 5CT](https://img.shields.io/badge/API%205CT-11th%20Edition-orange)
+![Tests](https://img.shields.io/badge/tests-33%20passing-brightgreen)
+
+Statistical quality control agent for dimensional inspection of OCTG tubulars.
+Applies API 5CT specification limits to automatically detect capability loss,
+process drift, and control violations — delivering a complete statistical report
+from raw inspection data.
+
+**Reference product:** 2-7/8" Tubing, Grade J55, 6.40 kg/m (API 5CT, 11th Edition)
+
+---
+
+## The Problem
+
+Dimensional inspection of OCTG tubulars — outside diameter (OD), wall thickness
+(WT), inside diameter (ID) — generates hundreds of measurements per production lot.
+
+Manual review can verify whether individual parts meet spec. It cannot reliably:
+
+* detect that a process is drifting toward the specification limit before parts
+  start failing
+* identify that variability between lots has changed, invalidating previous
+  t-test assumptions
+* distinguish a process that is capable but showing isolated anomalies from one
+  that is systematically out of control
+
+These are the patterns that precede nonconformity in oil and gas tubular
+production. A well integrity failure traced back to a substandard tubular is
+orders of magnitude more expensive than the inspection that would have caught it.
+
+---
 
 ## How the Agent Solves It
 
@@ -26,23 +53,39 @@ All three decisions accumulate alerts but never skip nodes — the pipeline
 always runs to completion and delivers the full statistical picture in a
 single structured report.
 
+---
+
 ## Sample Output
 
 SPC individuals control charts generated automatically for each controlled dimension:
 
 **Outside Diameter (OD)**
-![SPC - Outside Diameter](https://raw.githubusercontent.com/dea-cruz/octg-quality-agent/dev/docs/images/spc_od_mm.png)
+![SPC - Outside Diameter](https://raw.githubusercontent.com/dea-cruz/octg-quality-agent/main/docs/images/spc_od_mm.png)
 
 **Wall Thickness (WT)**
-![SPC - Wall Thickness](https://raw.githubusercontent.com/dea-cruz/octg-quality-agent/dev/docs/images/spc_wt_mm.png)
+![SPC - Wall Thickness](https://raw.githubusercontent.com/dea-cruz/octg-quality-agent/main/docs/images/spc_wt_mm.png)
 
 Red points indicate observations beyond ±3σ control limits. Control limits
 (CL, UCL, LCL) are statistical — distinct from API 5CT spec limits (LSL/USL).
 
+Process capability charts with normal fit and API 5CT spec limits:
+
+**Capability — Outside Diameter (OD)**
+![Capability - Outside Diameter](https://raw.githubusercontent.com/dea-cruz/octg-quality-agent/main/docs/images/capability_od_mm.png)
+
+**Capability — Wall Thickness (WT)**
+![Capability - Wall Thickness](https://raw.githubusercontent.com/dea-cruz/octg-quality-agent/main/docs/images/capability_wt_mm.png)
+
+The Cpk annotation is color-coded: green (Cpk ≥ 1.33), orange (1.00 ≤ Cpk < 1.33),
+red (Cpk < 1.00). OD uses bilateral spec limits (LSL/USL); WT uses unilateral lower
+(LSL only, per API 5CT §7.11.2).
+
+---
+
 ## How to Run
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/dea-cruz/octg-quality-agent.git
 cd octg-quality-agent
 pip install -r requirements.txt
 python main.py --size "2-7/8" --weight 6.40
@@ -55,6 +98,14 @@ python main.py --data path/to/data.csv --size "2-7/8" --weight 6.40
 ```
 
 The input CSV must contain the columns: `lot_id`, `od_mm`, `wt_mm`, `id_mm`.
+
+To run the test suite:
+
+```bash
+python -m pytest tests/ -v
+```
+
+---
 
 ## Project Structure
 
@@ -78,24 +129,31 @@ octg-quality-agent/
 ├── tests/
 │   └── test_nodes.py         # 33 pytest tests with shared DataFrame fixture
 ├── data/
-│   └── inspection_sample.csv # Sample data — 2-7/8" J55, 100 parts
+│   └── inspection_sample.csv # Sample data — 2-7/8" J55, 100 parts, lots A and B
 ├── docs/
 │   └── images/               # Sample output charts
 ├── main.py                   # CLI entry point
-└── requirements.txt
+└── requirements.txt          # Pinned dependencies
 ```
+
+---
 
 ## Statistical Methods
 
-| Statistical Methods (USP Esalq)                                             | Project Application                                                                                        |
+The pipeline applies content from *Fundamentos de Estatística* (MBA in Data
+Science & AI — USP Esalq) directly to an industrial inspection problem.
+
+| MBA Content (USP Esalq)                                                      | Project Application                                                                                        |
 | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Measures of position (mean, median, mode) and dispersion (std, CV, IQR)      | `node_descriptive`— overall and per-lot breakdown for OD, WT, ID                                        |
-| Shape indicators: Fisher skewness (g1) and excess kurtosis (g2)              | `node_descriptive`— alerts when                                                                         |
+| Shape indicators: Fisher skewness (g1) and excess kurtosis (g2)              | `node_descriptive`— flags asymmetry and heavy tails in the measurement distribution                     |
 | Process capability indices Cp and Cpk                                        | `node_capability`— bilateral for OD; unilateral lower for WT (API 5CT §7.11.2)                         |
-| Student t-test for comparison of two independent means                       | `node_ttest`— lot-to-lot drift detection when variances are equal                                       |
-| Chi-square goodness of fit (Fávero e Belfiore, 2024, Cap. 8)                | `node_chisquare`— tests whether non-conformances are uniformly distributed across spec categories       |
-| Pearson correlation and significance test (Fávero e Belfiore, 2024, Cap. 8) | `node_correlation`— OD×WT, OD×ID, WT×ID pairs                                                        |
-| *(industry practice)*                                                      | `node_normality`— Shapiro-Wilk;`node_levene`— variance equality;`node_spc`— 3-sigma control chart |
+| Student t-test for comparison of two independent means                       | `node_ttest`— lot-to-lot drift detection when variances are equal (Levene p ≥ 0.05)                    |
+| Chi-square goodness of fit (Fávero & Belfiore, 2024, Cap. 8)                | `node_chisquare`— tests whether non-conformances are uniformly distributed across spec categories       |
+| Pearson correlation and significance test (Fávero & Belfiore, 2024, Cap. 8) | `node_correlation`— OD×WT, OD×ID, WT×ID pairs                                                        |
+| *(beyond MBA content — industry practice)*                                | `node_normality`— Shapiro-Wilk;`node_levene`— variance equality;`node_spc`— 3-sigma control chart |
+
+---
 
 ## Design Decisions
 
@@ -125,6 +183,8 @@ inventing a specification limit not present in the standard, producing a
 meaningless result. The pipeline reports ID descriptive statistics and
 correlation but omits capability analysis for this dimension.
 
+---
+
 ## Known Limitations and Future Improvements
 
 * **Data source:** the pipeline currently reads from a local CSV file. The
@@ -140,7 +200,9 @@ correlation but omits capability analysis for this dimension.
   LangGraph's checkpointer. Replacing the CSV input with PostgreSQL will also
   resolve this limitation.
 
+---
+
 ## References
 
 * API 5CT, 11th Edition (2018) — Tables C.25 and 15, Sections 7.11.1 and 7.11.2
-* Fávero, L. P.; Belfiore, P.  *Manual de Análise de Dados* . 2024, Cap. 8.
+* Fávero, L. P.; Belfiore, P.  *Manual de Análise de Dados* . 2nd ed. LTC, 2024, Cap. 8

@@ -54,6 +54,7 @@ def _plot_control_chart(
     violation_idx_list = [i for i in series.index if i in violation_idx]
 
     fig, ax = plt.subplots(figsize=(12, 4))
+    ax.set_xlim(series.index[0] - 0.5, series.index[-1] + 0.5)  # anchor x-axis to data range
 
     # — individual points
     ax.plot(series.index, series.values, color="#4C72B0", linewidth=0.8,
