@@ -151,7 +151,7 @@ Science & AI — USP Esalq) directly to an industrial inspection problem.
 | Student t-test for comparison of two independent means                       | `node_ttest`— lot-to-lot drift detection when variances are equal (Levene p ≥ 0.05)                    |
 | Chi-square goodness of fit (Fávero & Belfiore, 2024, Cap. 8)                | `node_chisquare`— tests whether non-conformances are uniformly distributed across spec categories       |
 | Pearson correlation and significance test (Fávero & Belfiore, 2024, Cap. 8) | `node_correlation`— OD×WT, OD×ID, WT×ID pairs                                                        |
-| *(beyond MBA content — industry practice)*                                | `node_normality`— Shapiro-Wilk;`node_levene`— variance equality;`node_spc`— 3-sigma control chart |
+| *(industry practice)*                                                      | `node_normality`— Shapiro-Wilk;`node_levene`— variance equality;`node_spc`— 3-sigma control chart |
 
 ---
 
